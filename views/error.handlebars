@@ -1,0 +1,65 @@
+<div id="message" style="display:none">
+	<h1>An error was encountered...</h1>
+	<h4>error: {{error}}</h4>
+	<h4>error_description: {{error_description}}</h4>
+</div>
+
+<script>
+debugger;
+window.onload = runOnLoad;
+
+function runOnLoad(){
+  var error = "{{error}}";
+  if (error === "invalid_scope" ){
+	var cname = "wallet_" + "{{credentialType}}";
+
+    document.cookie = cname + "=; path=/; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+
+    siop_setCookie(cname, "credential_removed", 7);
+    
+    window.location = "{{applicationUrl}}";
+    return;
+  }
+
+  if (error === "registration_required" ){
+    window.location = "{{applicationUrl}}";
+    return;
+  }
+
+  var messageEl = document.getElementById("message");
+  messageEl.setAttribute("style", "display:block");
+}
+
+function setElementVisibility(id, value) {
+	var element = document.getElementById(id);
+	if (element){
+		if (value === 'toggle'){
+			if (element.classList.contains('clms_0')){
+				value = true;
+			}
+			else{
+				value = false;
+			}
+		}
+		if (value){
+			element.classList.remove('clms_0');
+			element.classList.add('clms_1');
+		}
+		else{
+			element.classList.remove('clms_1');
+			element.classList.add('clms_0');
+		}				
+	}
+}
+
+function siop_setCookie(cname, cvalue, exdays, path) {
+	if (!path){
+	  path = '/';
+	}
+	var d = new Date();
+	d.setTime(d.getTime() + (exdays*24*60*60*1000));
+	var expires = 'expires='+ d.toUTCString();
+	document.cookie = cname + '=' + cvalue + ';' + expires + ';path=' + path;
+}
+
+</script>

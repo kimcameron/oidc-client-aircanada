@@ -1,0 +1,28 @@
+<link href="/style.css" rel="stylesheet">
+
+<div class="container-fluid padding">
+<div class="row welcome text-center">
+  <div class="col-4" style="padding-bottom: 0em;">
+	  <img src="/img/uhn.jpg">
+  </div>
+  <div class="col-12">
+	<h2>Toronto General Hospital</h2>
+	<br/>
+  </div>
+</div>
+</div>
+
+<!--- Welcome Section -->
+<div class="container-fluid padding">
+<div class="row welcome text-center"
+  <div class="col-12">
+    <h1 class="display-4" style="padding-left: 1em;">{{{instructions}}}</h1>
+  </div>
+{{#if iClaims.photo}}
+  <div class="col-12">
+    <br/>
+    <img src="{{{iClaims.photo}}}">
+  </div>
+{{/if}}  
+</div>
+</div>
