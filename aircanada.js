@@ -4,84 +4,60 @@ module.exports = {
 
 var pk;
 var viewPath;
-var app_config;
-var request_config;
+var ac; // app_config;
 var viewPath;
-var applicationPath;
-var applicationUrl;
 
 var safe_fliers = [];
 var assigned_seats = {};
 
-
-
-async function registerEndpoints(pkSource, configSource) {
+async function registerEndpoints(pkSource, acSource) {
 	pk = pkSource;
-	app_config = configSource;
+	ac = acSource;
 	
-	console.log(app_config.client + ' starting up at ' + Date());
-
-	applicationPath = '/' + app_config.client;	
-	applicationUrl = pk.util.httpsServerUrlHref + app_config.client;
-
-	// used tp register with API provider
-	request_config = {
-		"client": app_config.client,
-		"company_name": app_config.company_name,
-		"credential_image": app_config.company_logo,
-		"instructions": app_config.instructions,
-		"credential_type": app_config.credential_type,
-		"credential_reason": app_config.credential_reason,
-		"scope": "openid"
-	}
+	console.log(ac.client + ' starting up at ' + Date());
 
 	var possibleError = '';
 	try{
 		viewPath = pk.app.settings.views;
 
 		// Set up endpoints
-		var endpoint = applicationUrl + '/landing_Page';
+		var endpoint = ac.applicationPath + '/landing_Page';
 		pk.app.options(endpoint, pk.cors());
 		pk.app.post(endpoint, pk.scaffold.corsOptions(), function(req, res){
 			landing_page(req, res);
 		});
 
-		var endpoint = applicationUrl + '/get_reception_data';
+		var endpoint = ac.applicationPath + '/get_reception_data';
 		pk.app.options(endpoint, pk.cors());
 		pk.app.get(endpoint, pk.scaffold.corsOptions(), function(req, res){
 			get_reception_data(req, res);
 		});
 
-		var endpoint = applicationUrl + '/reception_desk';
+		var endpoint = ac.applicationPath + '/reception_desk';
 		pk.app.options(endpoint, pk.cors());
 		pk.app.get(endpoint, pk.scaffold.corsOptions(), function(req, res){
 			reception_desk(req, res);
 		});
 
-		var endpoint = applicationUrl + '/chapi_verifier';
-		pk.app.options(endpoint, pk.cors());
-		pk.app.get(endpoint, pk.scaffold.corsOptions(), function(req, res){
-			chapi_verifier(req, res);
-		});
-
-		pk.app.get(applicationUrl, pk.scaffold.corsOptions(), function(req, res){
+		pk.app.get(ac.applicationPath, pk.scaffold.corsOptions(), function(req, res){
 			startApplication(req, res);
 		});
 
-		pk.scaffold.validateApiConfig(request_config);
+		pk.scaffold.validateRequestConfig(ac.request_config);
 		
 		var initParams = {
-			client_name: request_config.client,
+			client_name: ac.client,
 			authenticator: "",
-			api_config: encodeURIComponent(JSON.stringify(request_config))
+			api_config: encodeURIComponent(JSON.stringify(ac.request_config))
 		};
 
-		console.log('Registering with ' + app_config.client_api_url);
+		console.log('Registering with ' + ac.client_api_url);
 		possibleError = 'Unable to register with API';
 		var sessionKey = await pk.scaffold.registerApi(initParams);
 		console.log('Successful registration: ' + sessionKey);		
 	}
 	catch(err){
+		console.log("*** ERROR ****")
 		console.log(possibleError);
 		console.log(err);
 		process.exit(-1);
@@ -104,7 +80,7 @@ async function startApplication(req, res) {
 	}
 	
 	// endpoint to be called followed response from the wallet
-	var target_link_uri = applicationUrl + '/landing_page';
+	var target_link_uri = ac.applicationUrl + '/landing_page';
 
 	var response_mode = undefined;
 	if (req.query && req.query.post === 'true'){
@@ -112,9 +88,9 @@ async function startApplication(req, res) {
 	}
 
 	var app_instance_params = {
-		client_name: app_config.client,
-		credential_type: request_config.credential_type,
-    	client_api_url: app_config.client_api_url,
+		client_name: ac.client,
+		credential_type: ac.credential_type,
+    	client_api_url: ac.client_api_url,
 		iss: iss,
 		target_link_uri: target_link_uri
 	}
@@ -123,14 +99,14 @@ async function startApplication(req, res) {
     res.render(viewPath + '/start_application', {
     	layout: 'main_responsive',
     	app_instance_params: JSON.stringify(app_instance_params),
-    	client_api_url: app_config.client_api_url    	
+    	client_api_url: ac.client_api_url    	
     });
 }
 
 async function landing_page(req, res) {
 	var params = req.query.error ? req.query : req.body;
 	if (params.error){
-		await pk.scaffold.landingPageError(params, res, viewPath, applicationUrl);
+		await pk.scaffold.landingPageError(params, res, viewPath, ac.applicationUrl);
 	    return;		
 	}
 

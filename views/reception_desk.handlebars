@@ -1,0 +1,154 @@
+<link href="/style.css" rel="stylesheet">
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-md navbar-light bg-light sticky-top">
+<div class="container-fluid">
+  <a class="navbar-brand" href="#"><img src="/web/img/logo.png"></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarResponsive">
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">Flights</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="clearRegistrations();">Clear</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Loyalty</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Login</a>
+      </li>
+    </ul>
+  </div>
+</div>
+</nav>
+
+<!-- CleanCare section -->
+<header>
+  <img src="/web/img/lg-cleancare.jpg">
+</header>
+
+<!--- Welcome Section -->
+<div class="container-fluid padding">
+  <div class="row text-center">
+    <div class="col-12 mt-1">
+      <h4 id="flight_title"></h4>
+      <p>The following passengers have valid Safe-Cabin Credentials
+    </div>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Last</th>
+        <th scope="col">First</th>
+        <th scope="col">Seat</th>
+      </tr>
+    </thead>
+    <tbody id="table_body">
+    </tbody>
+  </table>
+</div>
+
+
+<script type="text/javascript">
+  var _index = 0;
+  var _flight_info = get_flight_info();
+
+  var flight_info_string = '<h4>Flight ' + _flight_info.flight + ' - ' 
+    + _flight_info.itinerary + ' ' + _flight_info.date + '</h4>'; 
+
+  var flightTitleEl = document.getElementById('flight_title');
+  flightTitleEl.innerHTML = flight_info_string;
+
+  window.setInterval(checkResults, 5000);
+
+function checkResults(){
+  var url = window.location.pathname.replace('reception_desk', 
+          'get_reception_data') + '?index=' + _index;
+
+  getJsonData({url: url, successFunc: processData});
+}
+
+function getJsonData(options){
+  var req = new XMLHttpRequest();
+  if (!options.method){
+  	options.method = 'GET';
+  }
+
+  req.open(options.method, options.url, true);
+  req.setRequestHeader('Content-Type', 'application/json');
+
+  req.onreadystatechange = function (e) {
+    if (req.readyState == 4) {
+      if (req.status == 200) {
+        var jResponse = JSON.parse(req.responseText);
+        options.successFunc(jResponse);
+      }
+      else {
+        var err;
+        if (req.status == 400) {
+          err = { error: 'The link_uri is not valid' };
+        } else {
+          err = { error: 'There was an error processing the response.' };
+        }
+        alert(err.error);
+      }
+    }
+  }
+
+  req.send(options.postBody);
+}
+
+function processData(safe_fliers){
+  var newHtml = '';
+  for (var i=0; i < safe_fliers.length; i++){
+    var safe_flier = safe_fliers[i];
+    _index = safe_flier.index + 1;
+
+    var table_row = '<tr><th scope="row">' + (safe_flier.index + 1) + '</th><td>' +
+      safe_flier.family_name + '</td><td>' + safe_flier.given_name + 
+      '</td><td>' + safe_flier.seat + '</td></tr>';
+    newHtml += table_row;
+  }
+
+  if (newHtml){
+    var tableBodyEl = document.getElementById('table_body');
+    tableBodyEl.innerHTML += newHtml;
+  }
+}
+
+function clearRegistrations(){
+  var clear = window.confirm('Clear reservations for ' + _flight_info.flight + '?')
+  if (clear){
+    var tableBodyEl = document.getElementById('table_body');
+    _index = 0;
+    tableBodyEl.innerHTML = '';
+
+    var url = window.location.pathname.replace('reception_desk', 
+            'get_reception_data') + '?clear=' + _flight_info.flight;
+
+    getJsonData({url: url, successFunc: processData});
+  }
+}
+
+function get_flight_info(){
+  var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', "December"];
+
+  var date = new Date();
+  var dateString = months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear();
+  var flight_info = {
+    "flight": "AC103",
+    "itinerary": "Toronto - Vancouver",
+    "time": "7:00 PM",
+    "date": dateString
+  }
+
+  return flight_info;
+}
+
+</script>

@@ -1,0 +1,229 @@
+window.onload = siop_on_load;
+
+async function siop_on_load(){
+  var paramsString = siop_getInput('siop_qr_code_params');
+  // client's configuration 
+  /*
+  {
+    siop_client_api_url: siop_client_api_url,
+    client_name: client_name,
+    credential_type: api_config.credential_type,
+    iss: iss,  // if not determined using smart credential 
+    target_link_uri: target_link_uri ,
+    wallet_error_url: wallet_error_url
+  }
+  */
+  var params = JSON.parse(paramsString);
+ 
+  var walletUrl = await siop_get_wallet_url(params);
+  if (walletUrl){
+    params.iss = walletUrl;
+  }
+
+  var qr_code_info = await siop_get_qr_code(params);
+
+  siop_set_img(qr_code_info);
+}
+
+async function siop_get_qr_code(params){
+  // call the qr_code api endpoint so qr_code and target_link_uri can
+  // be displade in the startup screen
+  var api_endpoint = params.siop_client_api_url + '/qr_code/' + params.client_name;
+  var api_params = {
+    iss: params.iss,
+    target_link_uri: params.target_link_uri    
+  }
+  var url = api_endpoint + siop_createParameterString(api_params, false);
+  var httpOptions = {
+    url: url,
+    method: 'GET',
+      headers: [ { name: 'Accept', value: 'application/json' } ]
+  };
+
+  var qr_code_info = JSON.parse(await jsonHttpData(httpOptions));
+  return qr_code_info;
+}
+
+function siop_set_img(qr_code_info){
+  var siop_qr_codeEl = document.getElementById('siop_qr_code');
+  if (!siop_qr_codeEl){
+    alert('Handlebar does not contain an image with id of "siop_qr_code"');
+    return;
+  }
+  var style = siop_qr_codeEl.getAttribute('style');
+  siop_qr_codeEl.removeAttribute("style");
+
+  var imageElString = '<img onClick="siop_simulateScan(\'' + qr_code_info.credential_request_url + 
+    '\');" oncontextmenu="siop_noLandingPage(\'' + qr_code_info.credential_request_url + '\');return false;" _style_ src="' + qr_code_info.qr_code + '">';
+  var sub = style ? 'style="' + style + '"' : '';
+  imageElString = imageElString.replace('_style_', sub);
+  siop_qr_codeEl.innerHTML = imageElString;
+}
+
+function siop_simulateScan(credential_request_url){
+    window.location = credential_request_url;
+}
+
+function siop_noLandingPage(credential_request_url){
+    var loc = credential_request_url;
+    loc = loc.substring(0, loc.indexOf('&target')) + '&target_link_uri=/debug';
+    window.location = loc;
+}
+
+async function siop_get_wallet_url(params){
+  var credential = params.credential_type;
+  var wallet_error_url = params.wallet_error_url;
+
+  var wallet_url = siop_getCookie('wallet_' + credential);
+  if (wallet_url){
+    return wallet_url;
+  }
+
+  try{
+    var wallet_url_response_string = await siop_get_wallet(credential);
+    var wallet_url_response = JSON.parse(wallet_url_response_string);
+    wallet_url = wallet_url_response.wallet;
+    if (wallet_url === 'n/a'){
+      if (wallet_error_url){
+        window.location = wallet_error_url + '?error=n/a';
+        return;
+      }
+    }
+    
+    // alert(wallet_url);
+
+    siop_setCookie('wallet_' + credential, wallet_url, 3650);
+    return wallet_url;
+  }
+  catch(err){
+    window.location = wallet_error_url + '?error=' + err;
+  }
+
+  function siop_setCookie(cname, cvalue, exdays, path) {
+    if (!path){
+      path = '/';
+    }
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = 'expires='+ d.toUTCString();
+    document.cookie = cname + '=' + cvalue + ';' + expires + ';path=' + path;
+  }
+
+  function siop_getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+      var c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
+  function siop_get_wallet(credential){
+    return new Promise((resolve, reject) => {
+      var iframeUrl = credential + "/wallet" ;  
+      var launchIframeString = '\
+        <div style="display: none;">\
+          <iframe id="wallet_iframe"\
+              width="300"\
+              height="200"\
+              src="' + iframeUrl + '">\
+          </iframe>\
+        </div>';
+      var timer = setTimeout(function () {
+        reject('smart credential offline');
+      }, 1000);   
+      var listener = window.addEventListener("message", (event) => {
+        resolve(event.data);
+      }, false);
+      var get_walletEl = document.getElementById('siop_get_wallet');
+      get_walletEl.innerHTML = launchIframeString;
+    });
+  }
+}
+
+function jsonHttpData(options){
+  return new Promise((resolve, reject) => {
+    var xhr = new XMLHttpRequest();
+    var method = options.method;
+    if (method === undefined){
+      method = 'GET';
+    }
+    xhr.open(method, options.url, true);
+
+    var authorizationHeaderPresent = false;
+    if (options.headers !== undefined){
+      for (var i=0; i < options.headers.length; i++){
+        var header = options.headers[i];
+        if (header.name === 'Authorization'){
+          authorizationHeaderPresent = true;
+        }
+        xhr.setRequestHeader(header.name, header.value);
+      }
+    }
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4){
+          if (xhr.status === 200) {
+              resolve(xhr.responseText);
+          }
+          else {
+            reject(xhr.responseText);
+          }
+        }
+    };
+
+    if (authorizationHeaderPresent){
+      xhr.withCredentials = true;
+    }
+
+    if (method.toUpperCase() === 'GET' || options.postData === undefined){
+      xhr.send();
+    }
+    else{
+      var postData = options.postData;
+      if (typeof postData !== 'string'){
+        postData = JSON.stringify(postData);
+      }
+      xhr.send(postData);         
+    }
+  });
+}
+
+function siop_getInput(name){
+  var paramEl = document.getElementById(name);
+  if (!paramEl){
+    alert('parameter error in siop_qr_code: ' + name);
+    throw ('parameter_error');
+  }
+
+  return paramEl.value;
+}
+
+function siop_createParameterString(obj, encode){
+  var handleEncode;
+  if (encode === false){
+    handleEncode = function(input){
+      return input;
+    }
+  }
+  else{
+    handleEncode = encodeURIComponent;    
+  }
+
+  var result = '';
+  var separator = '?';
+  for (var key in obj){
+    var value = obj[key] ? handleEncode(obj[key]) : '';
+    result += separator + handleEncode(key) + '=' + value;
+    separator = '&';
+  }
+
+  return result;
+}
