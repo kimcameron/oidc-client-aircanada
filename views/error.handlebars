@@ -13,15 +13,7 @@ function runOnLoad(){
   if (error === "invalid_scope" ){
 	var cname = "wallet_" + "{{credentialType}}";
 
-    document.cookie = cname + "=; path=/; expires = Thu, 01 Jan 1970 00:00:00 GMT";
-
-    siop_setCookie(cname, "credential_removed", 7);
-    
-    window.location = "{{applicationUrl}}";
-    return;
-  }
-
-  if (error === "registration_required" ){
+   document.cookie = cname + '=; Max-Age=-99999999;path=/';  
     window.location = "{{applicationUrl}}";
     return;
   }

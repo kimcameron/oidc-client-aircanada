@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "oidc-app-scaffold-node": "^1.0.8"
+    "oidc-app-scaffold-node": "^1.1.9"
   }
 }
