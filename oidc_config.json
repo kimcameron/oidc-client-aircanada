@@ -1,6 +1,6 @@
 {
   "config": {
-    "hostname": "https://virtual.itsourweb.org",
+    "hostname": "https://book.itsourweb.org",
     "port": 5000,
     "https_certificate_filename": "itsourweb_wildcard",
     "client_api_url": "https://book.itsourweb.org:3000/client_api"

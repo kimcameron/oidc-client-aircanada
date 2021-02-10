@@ -46,6 +46,9 @@
   <div class="col-12">
     <br/>
     <div id="siop_qr_code"></div>
+    <div id="mqtt_connect" style="display:none">
+      <span class="cg_details fas fa-mobile-alt" style="font-size:2em;"></span>
+    <div>
   </div>
 </div>
 </div>
@@ -56,7 +59,11 @@
 
 </div>
 
+<!-- These three scripts must be included to use all features of the oidc_app_instance api -->
 <script src="{{client_api_url}}/oidc_app_instance.js"></script>
+<script src="{{client_api_url}}/mqttws31.js"></script>
+<script src="{{client_api_url}}/siop_mqtt_client.js"></script>
+
 <script>
   
   var app_instance = new oidc_app_instance('app_config_params', 'app_instance_params', autoProceed);
@@ -71,6 +78,9 @@
       var pageEl = document.getElementById("page")
       pageEl.setAttribute("style", "display: block");
       siop_set_img(discovery_info);
+      if (discovery_info.rwl){
+        siop_mqtt_client(discovery_info);
+      }      
     }
   }
 </script>
