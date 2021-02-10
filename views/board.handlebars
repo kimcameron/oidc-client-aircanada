@@ -1,6 +1,7 @@
 <link href="/style.css" rel="stylesheet">
 
 <!-- Navigation -->
+<!-- Navigation -->
 <nav class="navbar navbar-expand-md navbar-light bg-light sticky-top">
 <div class="container-fluid">
   <a class="navbar-brand" href="#"><img src="/web/img/logo.png"></a>
@@ -10,19 +11,14 @@
   <div class="collapse navbar-collapse" id="navbarResponsive">
     <ul class="navbar-nav ml-auto">
       <li class="nav-item active">
-        <a class="nav-link" href="#">Book</a>
+      <li class="nav-item">
+        <a class="nav-link" onclick="siop_getCookie('app_launcher');">Health App Menu</a> 
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Plan</a>
+        <a class="nav-link" href="#">Help</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Fly</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Loyalty</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Login</a>
+        <a class="nav-link" onclick="siop_removeCookies();">Reset</a>
       </li>
     </ul>
   </div>
@@ -47,3 +43,32 @@
   </div>
 </div>
 </div>
+
+<script>
+function siop_getCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function siop_removeCookies() {
+  var res = document.cookie;
+  var multiple = res.split(";");
+  for(var i = 0; i < multiple.length; i++) {
+     var key = multiple[i].split("=");
+//     document.cookie = key[0]+"=;expires=Thu, 01 Jan 1970 00:00:00 UTC";
+     document.cookie = key[0]+'=; Max-Age=-99999999;path=/';  
+  }
+}
+
+</script>
