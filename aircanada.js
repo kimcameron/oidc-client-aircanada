@@ -97,7 +97,7 @@ async function landing_page(req, res) {
 	    	instructions = credentialSubject.firstName + ' ' + credentialSubject.lastName + ' may enter the Covid Safe Cabin.';
 	    }
 	    else{
-	    	instructions = 'Automated boarding not available.  Immunity status is "' + credentialSubject.status + '"';
+	    	instructions = 'Automated boarding not available because you are still awaiting your test results. Please try later.';
 	    }
 
 		res.render(viewPath + '/board', {
